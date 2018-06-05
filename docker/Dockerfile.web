@@ -1,0 +1,38 @@
+ARG PYTHON_VERSION
+FROM python:"$PYTHON_VERSION"-alpine3.7
+
+RUN apk add --update --no-cache bash sudo su-exec
+
+COPY entrypoint /usr/local/sbin/
+
+RUN chown root /usr/local/sbin/entrypoint && \
+    chmod 700 /usr/local/sbin/entrypoint
+
+##RUN echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
+##    echo "@edgecommunity http://nl.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
+##    echo "@testing http://nl.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+
+RUN apk update && apk upgrade
+RUN rm -rf /var/cache/* /tmp/* /var/log/* ~/.cache
+
+RUN apk add --update --no-cache curl unzip dbus-x11 ttf-freefont firefox-esr xvfb
+##RUN cat /etc/apk/repositories
+##RUN python --version
+##RUN uname -a
+
+ENV UNAME="robot" \
+    GNAME="robot" \
+    UHOME="/home/robot" \
+    HOST_UID="1000" \
+    HOST_GID="1000" \
+    SHELL="/bin/bash"
+
+ARG RF_VERSION
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir robotframework=="$RF_VERSION"
+RUN pip install --no-cache-dir selenium && \
+	pip install --no-cache-dir pyvirtualdisplay
+
+WORKDIR "$UHOME"
+
+ENTRYPOINT ["entrypoint", "robot", "--outputdir", "results"]
